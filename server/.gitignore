@@ -1,0 +1,16 @@
+# dependencies
+/node_modules
+
+# build
+/dist
+
+# local env files
+.env*.local
+.env
+.env.production
+
+src/results
+image.jpg
+image2.jpg
+
+model.onnx
