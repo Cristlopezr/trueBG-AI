@@ -41,7 +41,7 @@ function App() {
         formData.append('image', selectedFile);
 
         try {
-            const response = await fetch('http://localhost:3000/remove-background', {
+            const response = await fetch(`${import.meta.env.VITE_API_URL}/remove-background`, {
                 method: 'POST',
                 body: formData,
             });
