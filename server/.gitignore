@@ -9,8 +9,4 @@
 .env
 .env.production
 
-src/results
-image.jpg
-image2.jpg
-
 model.onnx

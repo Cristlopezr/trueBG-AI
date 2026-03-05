@@ -1,5 +1,4 @@
 import sharp from 'sharp';
-import fs from 'node:fs';
 
 export interface ImageData {
     buffer: Buffer;
@@ -16,12 +15,8 @@ const MODEL_SIZE = 1024;
  * - Converts to RGB (removes alpha channel)
  * - Returns raw pixel buffer + metadata
  */
-export async function prepareImageForModel(imagePath: string): Promise<ImageData> {
-    if (!fs.existsSync(imagePath)) {
-        throw new Error(`File not found: ${imagePath}`);
-    }
-
-    const { data, info } = await sharp(imagePath)
+export async function prepareImageForModel(imageBuffer: Buffer): Promise<ImageData> {
+    const { data, info } = await sharp(imageBuffer)
         .resize(MODEL_SIZE, MODEL_SIZE, { fit: 'fill' })
         .removeAlpha()
         .raw()
