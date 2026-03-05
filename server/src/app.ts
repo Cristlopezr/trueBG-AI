@@ -20,7 +20,7 @@ app.use(
     }),
 );
 
-const modelPath = path.join(__dirname, 'model.onnx');
+const modelPath = path.join(process.cwd(), 'src', 'model.onnx');
 
 const upload = multer({ storage: multer.memoryStorage() });
 
