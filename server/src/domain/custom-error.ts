@@ -22,6 +22,10 @@ export class CustomError extends Error {
         return new CustomError(404, message);
     }
 
+    static payloadTooLarge(message: string) {
+        return new CustomError(413, message);
+    }
+
     static internalServer(message: string) {
         return new CustomError(500, message);
     }

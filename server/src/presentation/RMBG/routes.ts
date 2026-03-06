@@ -1,6 +1,7 @@
-import { Router } from 'express';
+import { Router, Request, Response, NextFunction } from 'express';
 import { RMBGController } from './controller';
 import { RMBGService } from '../services/rmbg-service';
+import { CustomError } from '../../domain/custom-error';
 import { envs } from '../../config/envs';
 import rateLimit from 'express-rate-limit';
 import multer from 'multer';
@@ -24,7 +25,7 @@ const upload = multer({
             return cb(null, true);
         }
 
-        cb(new Error(`Invalid file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`));
+        cb(CustomError.badRequest(`Invalid file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`));
     },
 });
 
@@ -35,6 +36,17 @@ const limiter = rateLimit({
     standardHeaders: true,
     legacyHeaders: false,
 });
+
+// Wraps multer to convert MulterError into CustomError
+const handleUpload = (req: Request, res: Response, next: NextFunction) => {
+    upload.single('image')(req, res, (err) => {
+        if (err instanceof multer.MulterError && err.code === 'LIMIT_FILE_SIZE') {
+            return next(CustomError.payloadTooLarge('File too large. Max size is 10MB.'));
+        }
+        if (err) return next(err);
+        next();
+    });
+};
 
 const modelPath = path.join(process.cwd(), 'src', 'model.onnx');
 export class RMBGRoutes {
@@ -48,7 +60,7 @@ export class RMBGRoutes {
         });
         const rmbgController = new RMBGController(rmbgService);
 
-        router.post('/remove-background', limiter, upload.single('image'), rmbgController.removeBackground);
+        router.post('/remove-background', limiter, handleUpload, rmbgController.removeBackground);
 
         return router;
     }

@@ -1,4 +1,5 @@
 import express, { Request, Response, NextFunction, Router } from 'express';
+import { CustomError } from '../domain/custom-error';
 import cors from 'cors';
 
 interface Options {
@@ -30,10 +31,15 @@ export class Server {
         );
         this.app.use(this.routes);
 
-        // Global error handler (catches multer errors, etc.)
+        // Global error handler
         this.app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
             console.error(err.message);
-            res.status(400).json({ error: err.message });
+
+            if (err instanceof CustomError) {
+                return res.status(err.statusCode).json({ error: err.message });
+            }
+
+            res.status(500).json({ error: 'Internal server error' });
         });
 
         this.app.listen(this.port, () => {
