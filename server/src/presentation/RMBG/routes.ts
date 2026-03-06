@@ -2,10 +2,40 @@ import { Router } from 'express';
 import { RMBGController } from './controller';
 import { RMBGService } from '../services/rmbg-service';
 import { envs } from '../../config/envs';
+import rateLimit from 'express-rate-limit';
 import multer from 'multer';
 import path from 'node:path';
 
-const upload = multer({ storage: multer.memoryStorage() });
+const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/webp'];
+const ALLOWED_EXTENSIONS = ['.jpg', '.jpeg', '.png', '.webp'];
+const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
+
+const upload = multer({
+    storage: multer.memoryStorage(),
+    limits: {
+        fileSize: MAX_FILE_SIZE,
+    },
+    fileFilter: (_req, file, cb) => {
+        const ext = path.extname(file.originalname).toLowerCase();
+        const isMimeValid = ALLOWED_MIME_TYPES.includes(file.mimetype);
+        const isExtValid = ALLOWED_EXTENSIONS.includes(ext);
+
+        if (isMimeValid && isExtValid) {
+            return cb(null, true);
+        }
+
+        cb(new Error(`Invalid file type. Allowed: ${ALLOWED_EXTENSIONS.join(', ')}`));
+    },
+});
+
+const limiter = rateLimit({
+    windowMs: 60 * 1000, // 1 minute
+    max: 5,
+    message: { error: 'Too many requests, please try again later.' },
+    standardHeaders: true,
+    legacyHeaders: false,
+});
+
 const modelPath = path.join(process.cwd(), 'src', 'model.onnx');
 export class RMBGRoutes {
     static get routes(): Router {
@@ -18,7 +48,7 @@ export class RMBGRoutes {
         });
         const rmbgController = new RMBGController(rmbgService);
 
-        router.post('/remove-background', upload.single('image'), rmbgController.removeBackground);
+        router.post('/remove-background', limiter, upload.single('image'), rmbgController.removeBackground);
 
         return router;
     }

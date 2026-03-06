@@ -1,4 +1,4 @@
-import express, { Router } from 'express';
+import express, { Request, Response, NextFunction, Router } from 'express';
 import cors from 'cors';
 
 interface Options {
@@ -29,6 +29,13 @@ export class Server {
             }),
         );
         this.app.use(this.routes);
+
+        // Global error handler (catches multer errors, etc.)
+        this.app.use((err: Error, _req: Request, res: Response, _next: NextFunction) => {
+            console.error(err.message);
+            res.status(400).json({ error: err.message });
+        });
+
         this.app.listen(this.port, () => {
             console.log(`Server running on port ${this.port}`);
         });
